@@ -1,17 +1,10 @@
+import { formatDate } from '../utils/format.js'
 import './ClientList.css'
 
 const STATUS_COLORS = {
   active: { dot: '#4ade80', bg: '#0f2a1a', text: '#4ade80' },
   pending: { dot: '#facc15', bg: '#2a2100', text: '#facc15' },
   closed: { dot: '#666', bg: '#1a1a1a', text: '#888' },
-}
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 export default function ClientList({ clients, onEdit, onDelete }) {
