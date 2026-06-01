@@ -1,0 +1,123 @@
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.client-card {
+  background: #16161d;
+  border: 1px solid #1e1e28;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  transition: border-color 0.15s;
+}
+
+.client-card:hover {
+  border-color: #2e2e3a;
+}
+
+.client-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #1e1e30;
+  border: 1px solid #2e2e50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c7cf0;
+  flex-shrink: 0;
+}
+
+.client-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.client-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.client-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.client-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.client-detail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #888;
+}
+
+.client-detail svg {
+  opacity: 0.6;
+}
+
+.client-detail--muted {
+  color: #555;
+  font-size: 12px;
+}
+
+.client-notes {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  border-left: 2px solid #2a2a38;
+  padding-left: 10px;
+  margin-top: 8px;
+}
+
+.client-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: #555;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.empty-state strong {
+  color: #888;
+}
