@@ -94,6 +94,11 @@
   color: #aaa;
   margin-bottom: 6px;
   line-height: 1.4;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .client-payment {

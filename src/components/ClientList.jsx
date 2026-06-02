@@ -117,7 +117,7 @@ function ClientCard({ client, onEdit, onDelete }) {
         )}
 
         {client.notes && (
-          <div className="client-action">{client.notes.split('\n')[0]}</div>
+          <div className="client-action">{client.notes}</div>
         )}
 
         {client.paymentDue && (
