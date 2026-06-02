@@ -1,6 +1,27 @@
 import { useState } from 'react'
 import './ClientModal.css'
 
+const GMB_OPTIONS = [
+  { value: 'na',             label: 'N/A'              },
+  { value: 'waiting-access', label: 'Waiting for Access' },
+  { value: 'needs-page',     label: 'Needs Page'       },
+  { value: 'verifying',      label: 'Verifying'        },
+  { value: 'verified',       label: 'Verified'         },
+  { value: 'access-given',   label: 'Access Given'     },
+]
+
+const DOMAIN_OPTIONS = [
+  { value: 'na',             label: 'N/A'              },
+  { value: 'waiting-access', label: 'Waiting for Access' },
+  { value: 'access-given',   label: 'Access Given'     },
+  { value: 'need-to-buy',    label: 'Need to Buy'      },
+]
+
+const IMAGES_OPTIONS = [
+  { value: 'awaiting-client', label: 'Awaiting Client' },
+  { value: 'received',        label: 'Received'        },
+]
+
 const EMPTY = {
   name: '',
   company: '',
@@ -14,7 +35,6 @@ const EMPTY = {
   marketingFormSent: false,
   paymentDue: '',
   nextCheckIn: '',
-  action: '',
   notes: '',
 }
 
@@ -78,25 +98,6 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
             </Field>
           </div>
 
-          <div className="form-row">
-            <Field label="Email">
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => set('email', e.target.value)}
-                placeholder="email@example.com"
-              />
-            </Field>
-            <Field label="Phone">
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => set('phone', e.target.value)}
-                placeholder="+1 (555) 000-0000"
-              />
-            </Field>
-          </div>
-
           <div className="form-divider" />
 
           <div className="form-row">
@@ -117,12 +118,12 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
             </Field>
           </div>
 
-          <Field label="Action / Next Step">
-            <input
-              type="text"
-              value={form.action}
-              onChange={(e) => set('action', e.target.value)}
-              placeholder="e.g. Send payment link"
+          <Field label="Notes / Next step">
+            <textarea
+              value={form.notes}
+              onChange={(e) => set('notes', e.target.value)}
+              placeholder="First line = summary shown on card. Add more lines for extra notes."
+              rows={4}
             />
           </Field>
 
@@ -130,30 +131,28 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
 
           <div className="form-row">
             <Field label="GMB Status">
-              <select value={form.gmbStatus} onChange={(e) => set('gmbStatus', e.target.value)}>
-                <option value="na">N/A</option>
-                <option value="waiting-access">Waiting for Access</option>
-                <option value="needs-page">Needs Page</option>
-                <option value="verifying">Verifying</option>
-                <option value="verified">Verified</option>
-                <option value="access-given">Access Given</option>
-              </select>
+              <OtherableSelect
+                value={form.gmbStatus}
+                onChange={(v) => set('gmbStatus', v)}
+                options={GMB_OPTIONS}
+              />
             </Field>
             <Field label="Domain Status">
-              <select value={form.domainStatus} onChange={(e) => set('domainStatus', e.target.value)}>
-                <option value="na">N/A</option>
-                <option value="waiting-access">Waiting for Access</option>
-                <option value="access-given">Access Given</option>
-              </select>
+              <OtherableSelect
+                value={form.domainStatus}
+                onChange={(v) => set('domainStatus', v)}
+                options={DOMAIN_OPTIONS}
+              />
             </Field>
           </div>
 
           <div className="form-row">
             <Field label="Images Status">
-              <select value={form.imagesStatus} onChange={(e) => set('imagesStatus', e.target.value)}>
-                <option value="awaiting-client">Awaiting Client</option>
-                <option value="received">Received</option>
-              </select>
+              <OtherableSelect
+                value={form.imagesStatus}
+                onChange={(v) => set('imagesStatus', v)}
+                options={IMAGES_OPTIONS}
+              />
             </Field>
             <Field label="Checklist">
               <div className="form-checks">
@@ -177,15 +176,6 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
             </Field>
           </div>
 
-          <Field label="Notes">
-            <textarea
-              value={form.notes}
-              onChange={(e) => set('notes', e.target.value)}
-              placeholder="Any notes about this client..."
-              rows={3}
-            />
-          </Field>
-
           {error && <p className="form-error">{error}</p>}
 
           <div className="modal-footer">
@@ -206,5 +196,40 @@ function Field({ label, children }) {
       <label className="form-label">{label}</label>
       {children}
     </div>
+  )
+}
+
+function OtherableSelect({ value, onChange, options }) {
+  const isKnown = options.some((o) => o.value === value)
+  const [customMode, setCustomMode] = useState(!isKnown)
+
+  function handleSelectChange(e) {
+    if (e.target.value === '__other__') {
+      setCustomMode(true)
+      onChange('')
+    } else {
+      setCustomMode(false)
+      onChange(e.target.value)
+    }
+  }
+
+  return (
+    <>
+      <select value={customMode ? '__other__' : value} onChange={handleSelectChange}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+        <option value="__other__">Other...</option>
+      </select>
+      {customMode && (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Type custom value..."
+          autoFocus
+        />
+      )}
+    </>
   )
 }

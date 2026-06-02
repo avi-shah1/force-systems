@@ -42,13 +42,12 @@ Each client object:
   // follow-up workflow — these mirror the old spreadsheet columns:
   paymentDue,          // string — money owed or payment note, '' if none
   onboardingFormDone,  // boolean
-  imagesStatus,        // 'awaiting-client' | 'received'
-  gmbStatus,           // 'na' | 'waiting-access' | 'needs-page' | 'verifying' | 'verified' | 'access-given'
-  domainStatus,        // 'na' | 'waiting-access' | 'access-given'
+  imagesStatus,        // 'awaiting-client' | 'received' | <custom string>
+  gmbStatus,           // 'na' | 'waiting-access' | 'needs-page' | 'verifying' | 'verified' | 'access-given' | <custom string>
+  domainStatus,        // 'na' | 'waiting-access' | 'access-given' | 'need-to-buy' | <custom string>
   nextCheckIn,         // YYYY-MM-DD date string or null — drives the follow-up queue
-  action,              // free-text next step (e.g. "send new payment link")
   marketingFormSent,   // boolean
-  notes,               // free-text
+  notes,               // free-text — first line shown as summary on card; may contain action text
 }
 ```
 

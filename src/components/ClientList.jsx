@@ -30,6 +30,7 @@ const DOMAIN_LABELS = {
   'na':             { text: 'N/A',          color: '#555'    },
   'waiting-access': { text: 'Waiting',      color: '#facc15' },
   'access-given':   { text: 'Access Given', color: '#60a5fa' },
+  'need-to-buy':    { text: 'Need to Buy',  color: '#f87171' },
 }
 
 const IMAGES_LABELS = {
@@ -88,9 +89,9 @@ function ClientCard({ client, onEdit, onDelete }) {
   const isDueToday = checkIn && checkIn === TODAY
   const isDue = isOverdue || isDueToday
 
-  const gmbInfo = GMB_LABELS[client.gmbStatus] ?? GMB_LABELS.na
-  const domainInfo = DOMAIN_LABELS[client.domainStatus] ?? DOMAIN_LABELS.na
-  const imagesInfo = IMAGES_LABELS[client.imagesStatus] ?? IMAGES_LABELS['awaiting-client']
+  const gmbInfo = GMB_LABELS[client.gmbStatus] ?? { text: client.gmbStatus || 'N/A', color: '#aaa' }
+  const domainInfo = DOMAIN_LABELS[client.domainStatus] ?? { text: client.domainStatus || 'N/A', color: '#aaa' }
+  const imagesInfo = IMAGES_LABELS[client.imagesStatus] ?? { text: client.imagesStatus || 'Awaiting', color: '#aaa' }
 
   return (
     <div className={`client-card${isDue ? ' client-card--due' : ''}`}>
@@ -115,8 +116,8 @@ function ClientCard({ client, onEdit, onDelete }) {
           </div>
         )}
 
-        {client.action && (
-          <div className="client-action">{client.action}</div>
+        {client.notes && (
+          <div className="client-action">{client.notes.split('\n')[0]}</div>
         )}
 
         {client.paymentDue && (
@@ -131,9 +132,6 @@ function ClientCard({ client, onEdit, onDelete }) {
           <WorkflowBadge label="Marketing" done={client.marketingFormSent} />
         </div>
 
-        {client.notes && (
-          <p className="client-notes">{client.notes}</p>
-        )}
       </div>
 
       <div className="client-actions">

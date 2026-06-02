@@ -25,8 +25,13 @@ function migrate(c) {
   if (out.marketingFormSent === undefined) out.marketingFormSent = false
   if (out.paymentDue === undefined) out.paymentDue = ''
   if (out.nextCheckIn === undefined) out.nextCheckIn = null
-  if (out.action === undefined) out.action = ''
   if (out.notes === undefined) out.notes = ''
+  // Merge action into notes (one-time migration — action is cleared to '' afterwards)
+  if (out.action) {
+    out.notes = [out.action, out.notes].filter(Boolean).join('\n')
+    out.action = ''
+  }
+  if (out.action === undefined) out.action = ''
   return out
 }
 
