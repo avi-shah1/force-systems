@@ -76,7 +76,7 @@
   letter-spacing: 0.5px;
 }
 
-.form-field input,
+.form-field input:not([type="checkbox"]),
 .form-field textarea,
 .form-field select {
   background: #0f0f13;
@@ -95,10 +95,45 @@
   color: #3a3a50;
 }
 
-.form-field input:focus,
+.form-field input:not([type="checkbox"]):focus,
 .form-field textarea:focus,
 .form-field select:focus {
   border-color: #4f46e5;
+}
+
+.form-divider {
+  height: 1px;
+  background: #1e1e28;
+  margin: 2px 0;
+}
+
+.form-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #0f0f13;
+  border: 1px solid #2a2a38;
+  border-radius: 8px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.form-check input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+  flex-shrink: 0;
 }
 
 .form-error {

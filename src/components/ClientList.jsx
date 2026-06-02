@@ -1,10 +1,52 @@
 import { formatDate } from '../utils/format.js'
 import './ClientList.css'
 
-const STATUS_COLORS = {
-  active: { dot: '#4ade80', bg: '#0f2a1a', text: '#4ade80' },
-  pending: { dot: '#facc15', bg: '#2a2100', text: '#facc15' },
-  closed: { dot: '#666', bg: '#1a1a1a', text: '#888' },
+const STAGE_COLORS = {
+  active:          { dot: '#4ade80', bg: '#0f2a1a', text: '#4ade80' },
+  paused:          { dot: '#666',    bg: '#1a1a1a', text: '#888'    },
+  onboarding:      { dot: '#60a5fa', bg: '#0a1a2e', text: '#60a5fa' },
+  'awaiting-form': { dot: '#facc15', bg: '#2a2100', text: '#facc15' },
+  warm:            { dot: '#fb923c', bg: '#2a1400', text: '#fb923c' },
+}
+
+const STAGE_LABELS = {
+  active: 'Active',
+  paused: 'Paused',
+  onboarding: 'Onboarding',
+  'awaiting-form': 'Awaiting Form',
+  warm: 'Warm',
+}
+
+const GMB_LABELS = {
+  'na':             { text: 'N/A',          color: '#555'    },
+  'waiting-access': { text: 'Waiting',      color: '#facc15' },
+  'needs-page':     { text: 'Needs Page',   color: '#f87171' },
+  'verifying':      { text: 'Verifying',    color: '#fb923c' },
+  'verified':       { text: 'Verified',     color: '#4ade80' },
+  'access-given':   { text: 'Access Given', color: '#60a5fa' },
+}
+
+const DOMAIN_LABELS = {
+  'na':             { text: 'N/A',          color: '#555'    },
+  'waiting-access': { text: 'Waiting',      color: '#facc15' },
+  'access-given':   { text: 'Access Given', color: '#60a5fa' },
+}
+
+const IMAGES_LABELS = {
+  'awaiting-client': { text: 'Awaiting', color: '#facc15' },
+  'received':        { text: 'Received', color: '#4ade80' },
+}
+
+const TODAY = new Date().toISOString().slice(0, 10)
+
+function formatDateOnly(dateStr) {
+  if (!dateStr) return ''
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 export default function ClientList({ clients, onEdit, onDelete }) {
@@ -32,8 +74,8 @@ export default function ClientList({ clients, onEdit, onDelete }) {
 }
 
 function ClientCard({ client, onEdit, onDelete }) {
-  const status = client.status ?? 'pending'
-  const colors = STATUS_COLORS[status] ?? STATUS_COLORS.pending
+  const stage = client.stage ?? 'active'
+  const colors = STAGE_COLORS[stage] ?? STAGE_COLORS.active
   const initials = client.name
     .split(' ')
     .map((w) => w[0])
@@ -41,8 +83,17 @@ function ClientCard({ client, onEdit, onDelete }) {
     .slice(0, 2)
     .toUpperCase()
 
+  const checkIn = client.nextCheckIn
+  const isOverdue = checkIn && checkIn < TODAY
+  const isDueToday = checkIn && checkIn === TODAY
+  const isDue = isOverdue || isDueToday
+
+  const gmbInfo = GMB_LABELS[client.gmbStatus] ?? GMB_LABELS.na
+  const domainInfo = DOMAIN_LABELS[client.domainStatus] ?? DOMAIN_LABELS.na
+  const imagesInfo = IMAGES_LABELS[client.imagesStatus] ?? IMAGES_LABELS['awaiting-client']
+
   return (
-    <div className="client-card">
+    <div className={`client-card${isDue ? ' client-card--due' : ''}`}>
       <div className="client-avatar">{initials}</div>
 
       <div className="client-info">
@@ -53,40 +104,31 @@ function ClientCard({ client, onEdit, onDelete }) {
             style={{ background: colors.bg, color: colors.text }}
           >
             <span className="status-dot" style={{ background: colors.dot }} />
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {STAGE_LABELS[stage] ?? stage}
           </span>
         </div>
 
-        <div className="client-details">
-          {client.email && (
-            <span className="client-detail">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-              {client.email}
-            </span>
-          )}
-          {client.phone && (
-            <span className="client-detail">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.91 13.5 19.79 19.79 0 0 1 1.87 4.82 2 2 0 0 1 3.84 2.64h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6.09 6.09l1.72-1.08a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-              {client.phone}
-            </span>
-          )}
-          {client.company && (
-            <span className="client-detail">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              {client.company}
-            </span>
-          )}
-          <span className="client-detail client-detail--muted">
-            Added {formatDate(client.createdAt)}
-          </span>
+        {checkIn && (
+          <div className={`client-checkin${isDue ? ' client-checkin--due' : ''}`}>
+            {isOverdue ? 'Overdue: ' : isDueToday ? 'Due today: ' : 'Next: '}
+            {formatDateOnly(checkIn)}
+          </div>
+        )}
+
+        {client.action && (
+          <div className="client-action">{client.action}</div>
+        )}
+
+        {client.paymentDue && (
+          <div className="client-payment">{client.paymentDue}</div>
+        )}
+
+        <div className="client-workflow">
+          <WorkflowBadge label="Form" done={client.onboardingFormDone} />
+          <WorkflowBadge label={`Images: ${imagesInfo.text}`} color={imagesInfo.color} />
+          <WorkflowBadge label={`GMB: ${gmbInfo.text}`} color={gmbInfo.color} />
+          <WorkflowBadge label={`Domain: ${domainInfo.text}`} color={domainInfo.color} />
+          <WorkflowBadge label="Marketing" done={client.marketingFormSent} />
         </div>
 
         {client.notes && (
@@ -99,5 +141,14 @@ function ClientCard({ client, onEdit, onDelete }) {
         <button className="btn-danger" onClick={onDelete}>Delete</button>
       </div>
     </div>
+  )
+}
+
+function WorkflowBadge({ label, done, color }) {
+  const c = color ?? (done ? '#4ade80' : '#555')
+  return (
+    <span className="workflow-badge" style={{ color: c, borderColor: c + '44' }}>
+      {label}
+    </span>
   )
 }

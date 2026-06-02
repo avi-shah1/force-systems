@@ -1,36 +1,67 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useClients } from './hooks/useClients.js'
 import ClientList from './components/ClientList.jsx'
 import ClientModal from './components/ClientModal.jsx'
 import StatCard from './components/StatCard.jsx'
 import './App.css'
 
-export default function App() {
-  const { clients, addClient, updateClient, deleteClient } = useClients()
-  const [modal, setModal] = useState(null) // null | { mode: 'add' } | { mode: 'edit', client }
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+const TODAY = new Date().toISOString().slice(0, 10)
 
-  const filtered = clients.filter((c) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.phone ?? '').includes(search)
-    const matchesStatus = statusFilter === 'all' || c.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+export default function App() {
+  const { clients, addClient, updateClient, deleteClient, importClients } = useClients()
+  const [modal, setModal] = useState(null)
+  const [search, setSearch] = useState('')
+  const [stageFilter, setStageFilter] = useState('all')
+  const fileInputRef = useRef(null)
+
+  const filtered = clients
+    .filter((c) => {
+      const matchesSearch =
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.phone ?? '').includes(search)
+      const matchesStage = stageFilter === 'all' || c.stage === stageFilter
+      return matchesSearch && matchesStage
+    })
+    .sort((a, b) => {
+      if (!a.nextCheckIn && !b.nextCheckIn) return 0
+      if (!a.nextCheckIn) return 1
+      if (!b.nextCheckIn) return -1
+      return a.nextCheckIn.localeCompare(b.nextCheckIn)
+    })
 
   const stats = {
     total: clients.length,
-    active: clients.filter((c) => c.status === 'active').length,
-    pending: clients.filter((c) => c.status === 'pending').length,
-    closed: clients.filter((c) => c.status === 'closed').length,
+    active: clients.filter((c) => c.stage === 'active').length,
+    onboarding: clients.filter((c) => c.stage === 'onboarding' || c.stage === 'awaiting-form').length,
+    due: clients.filter((c) => c.nextCheckIn && c.nextCheckIn <= TODAY).length,
   }
 
   function handleSave(data) {
     if (modal.mode === 'add') addClient(data)
     else updateClient(modal.client.id, data)
     setModal(null)
+  }
+
+  function handleImport(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result)
+        if (!Array.isArray(data)) throw new Error('Expected array')
+        const msg = clients.length > 0
+          ? `Replace all ${clients.length} existing clients with ${data.length} from file?`
+          : null
+        if (msg && !confirm(msg)) return
+        importClients(data)
+      } catch {
+        alert('Could not parse JSON file.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   return (
@@ -42,9 +73,21 @@ export default function App() {
             <span className="brand-divider">·</span>
             <span className="brand-sub">Force Systems</span>
           </div>
-          <button className="btn-primary" onClick={() => setModal({ mode: 'add' })}>
-            + Add Client
-          </button>
+          <div className="header-actions">
+            <button className="btn-secondary" onClick={() => fileInputRef.current?.click()}>
+              Import JSON
+            </button>
+            <button className="btn-primary" onClick={() => setModal({ mode: 'add' })}>
+              + Add Client
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={handleImport}
+            />
+          </div>
         </div>
       </header>
 
@@ -52,8 +95,8 @@ export default function App() {
         <div className="stats-row">
           <StatCard label="Total" value={stats.total} />
           <StatCard label="Active" value={stats.active} accent="green" />
-          <StatCard label="Pending" value={stats.pending} accent="yellow" />
-          <StatCard label="Closed" value={stats.closed} accent="gray" />
+          <StatCard label="Onboarding" value={stats.onboarding} accent="blue" />
+          <StatCard label="Due Now" value={stats.due} accent="red" />
         </div>
 
         <div className="controls">
@@ -66,13 +109,15 @@ export default function App() {
           />
           <select
             className="filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
           >
-            <option value="all">All statuses</option>
+            <option value="all">All stages</option>
             <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="closed">Closed</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="awaiting-form">Awaiting Form</option>
+            <option value="warm">Warm</option>
+            <option value="paused">Paused</option>
           </select>
         </div>
 

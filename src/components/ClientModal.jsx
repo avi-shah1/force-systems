@@ -1,10 +1,29 @@
 import { useState } from 'react'
 import './ClientModal.css'
 
-const EMPTY = { name: '', email: '', phone: '', company: '', status: 'active', notes: '' }
+const EMPTY = {
+  name: '',
+  company: '',
+  email: '',
+  phone: '',
+  stage: 'active',
+  onboardingFormDone: false,
+  imagesStatus: 'awaiting-client',
+  gmbStatus: 'na',
+  domainStatus: 'na',
+  marketingFormSent: false,
+  paymentDue: '',
+  nextCheckIn: '',
+  action: '',
+  notes: '',
+}
 
 export default function ClientModal({ mode, initial, onSave, onClose }) {
-  const [form, setForm] = useState({ ...EMPTY, ...initial })
+  const [form, setForm] = useState({
+    ...EMPTY,
+    ...initial,
+    nextCheckIn: initial?.nextCheckIn ?? '',
+  })
   const [error, setError] = useState('')
 
   function set(field, value) {
@@ -17,7 +36,7 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
       setError('Name is required.')
       return
     }
-    onSave({ ...form, name: form.name.trim() })
+    onSave({ ...form, name: form.name.trim(), nextCheckIn: form.nextCheckIn || null })
   }
 
   return (
@@ -40,6 +59,26 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
           </Field>
 
           <div className="form-row">
+            <Field label="Company">
+              <input
+                type="text"
+                value={form.company}
+                onChange={(e) => set('company', e.target.value)}
+                placeholder="Company name"
+              />
+            </Field>
+            <Field label="Stage">
+              <select value={form.stage} onChange={(e) => set('stage', e.target.value)}>
+                <option value="active">Active</option>
+                <option value="onboarding">Onboarding</option>
+                <option value="awaiting-form">Awaiting Form</option>
+                <option value="warm">Warm</option>
+                <option value="paused">Paused</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="form-row">
             <Field label="Email">
               <input
                 type="email"
@@ -58,24 +97,83 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
             </Field>
           </div>
 
+          <div className="form-divider" />
+
           <div className="form-row">
-            <Field label="Company">
+            <Field label="Next Check-in">
               <input
-                type="text"
-                value={form.company}
-                onChange={(e) => set('company', e.target.value)}
-                placeholder="Company name"
+                type="date"
+                value={form.nextCheckIn ?? ''}
+                onChange={(e) => set('nextCheckIn', e.target.value)}
               />
             </Field>
-            <Field label="Status">
-              <select
-                value={form.status}
-                onChange={(e) => set('status', e.target.value)}
-              >
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="closed">Closed</option>
+            <Field label="Payment Due">
+              <input
+                type="text"
+                value={form.paymentDue}
+                onChange={(e) => set('paymentDue', e.target.value)}
+                placeholder="e.g. Owes $147"
+              />
+            </Field>
+          </div>
+
+          <Field label="Action / Next Step">
+            <input
+              type="text"
+              value={form.action}
+              onChange={(e) => set('action', e.target.value)}
+              placeholder="e.g. Send payment link"
+            />
+          </Field>
+
+          <div className="form-divider" />
+
+          <div className="form-row">
+            <Field label="GMB Status">
+              <select value={form.gmbStatus} onChange={(e) => set('gmbStatus', e.target.value)}>
+                <option value="na">N/A</option>
+                <option value="waiting-access">Waiting for Access</option>
+                <option value="needs-page">Needs Page</option>
+                <option value="verifying">Verifying</option>
+                <option value="verified">Verified</option>
+                <option value="access-given">Access Given</option>
               </select>
+            </Field>
+            <Field label="Domain Status">
+              <select value={form.domainStatus} onChange={(e) => set('domainStatus', e.target.value)}>
+                <option value="na">N/A</option>
+                <option value="waiting-access">Waiting for Access</option>
+                <option value="access-given">Access Given</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="form-row">
+            <Field label="Images Status">
+              <select value={form.imagesStatus} onChange={(e) => set('imagesStatus', e.target.value)}>
+                <option value="awaiting-client">Awaiting Client</option>
+                <option value="received">Received</option>
+              </select>
+            </Field>
+            <Field label="Checklist">
+              <div className="form-checks">
+                <label className="form-check">
+                  <input
+                    type="checkbox"
+                    checked={form.onboardingFormDone}
+                    onChange={(e) => set('onboardingFormDone', e.target.checked)}
+                  />
+                  Onboarding Form Done
+                </label>
+                <label className="form-check">
+                  <input
+                    type="checkbox"
+                    checked={form.marketingFormSent}
+                    onChange={(e) => set('marketingFormSent', e.target.checked)}
+                  />
+                  Marketing Form Sent
+                </label>
+              </div>
             </Field>
           </div>
 

@@ -33,20 +33,21 @@ Each client object:
 {
   id,                  // string, crypto.randomUUID()
   createdAt,           // string, ISO 8601
+  updatedAt,           // string, ISO 8601
   name,                // required — client / project name
   company, email, phone, // optional strings
 
-  status,              // 'active' | 'pending' | 'closed'  (sales/pipeline state)
+  stage,               // 'active' | 'paused' | 'onboarding' | 'awaiting-form' | 'warm'
 
   // follow-up workflow — these mirror the old spreadsheet columns:
   paymentDue,          // string — money owed or payment note, '' if none
   onboardingFormDone,  // boolean
-  photosReceived,      // boolean
-  gmbStatus,           // 'na' | 'waiting' | 'needs-page' | 'verifying' | 'verified'
-  domainStatus,        // 'na' | 'waiting' | 'need-access' | 'received'
-  nextCheckIn,         // ISO date string — drives the follow-up queue
+  imagesStatus,        // 'awaiting-client' | 'received'
+  gmbStatus,           // 'na' | 'waiting-access' | 'needs-page' | 'verifying' | 'verified' | 'access-given'
+  domainStatus,        // 'na' | 'waiting-access' | 'access-given'
+  nextCheckIn,         // YYYY-MM-DD date string or null — drives the follow-up queue
   action,              // free-text next step (e.g. "send new payment link")
-  qrMarketingGiven,    // boolean — only relevant once the build is finished
+  marketingFormSent,   // boolean
   notes,               // free-text
 }
 ```
@@ -56,11 +57,10 @@ read the stored array, fill missing fields with defaults, write it back. Never
 ship a schema change that drops or orphans saved client data — there is no
 backup.
 
-## Status enums — keep in sync
+## Stage enums — keep in sync
 
-- `status` values must match the keys in `STATUS_COLORS` (`ClientList.jsx`) and
-  the `StatCard` accent classes (`--green` / `--yellow` / `--gray` in `App.css`).
-  Adding a status means updating all three.
+- `stage` values must match the keys in `STAGE_COLORS` (`ClientList.jsx`) and
+  the `StatCard` accent classes in `App.css`. Adding a stage means updating all three.
 - `gmbStatus` and `domainStatus` use only the exact strings listed above. Do not
   reintroduce free-text status values — the dashboard exists to replace the
   spreadsheet's messy free text.
@@ -87,7 +87,7 @@ src/
 
 - localStorage is per-browser and per-device. There is no sync and no server
   backup. Warn before any change that could clear or overwrite the stored array.
-- Status accent colors live in two places (`STATUS_COLORS` inline + `StatCard`
-  CSS modifiers). They drift apart easily — change both.
+- Stage accent colors live in two places (`STAGE_COLORS` inline in `ClientList.jsx` + `StatCard`
+  CSS modifiers in `App.css`). They drift apart easily — change both.
 
 <!-- Maintainer note: sales scripts, GBP and website SOPs live in the project docs, not here, by design (see CLAUDE.md guidance: exclude business context). -->

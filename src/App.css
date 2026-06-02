@@ -88,9 +88,12 @@
   letter-spacing: 0.5px;
 }
 
-.stat-card--green .stat-value { color: #4ade80; }
+.stat-card--green .stat-value  { color: #4ade80; }
 .stat-card--yellow .stat-value { color: #facc15; }
-.stat-card--gray .stat-value { color: #888; }
+.stat-card--gray .stat-value   { color: #888;    }
+.stat-card--blue .stat-value   { color: #60a5fa; }
+.stat-card--red .stat-value    { color: #f87171; }
+.stat-card--orange .stat-value { color: #fb923c; }
 
 /* Controls */
 .controls {
@@ -127,6 +130,12 @@
 }
 
 .filter-select:focus { border-color: #3b3b50; }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
 /* Buttons */
 .btn-primary {
