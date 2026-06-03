@@ -1,8 +1,11 @@
 import { useState, useRef } from 'react'
 import { useClients } from './hooks/useClients.js'
+import { useSession } from './hooks/useSession.js'
 import ClientList from './components/ClientList.jsx'
 import ClientModal from './components/ClientModal.jsx'
+import LoginPage from './components/LoginPage.jsx'
 import StatCard from './components/StatCard.jsx'
+import { supabase } from './lib/supabase.js'
 import './App.css'
 
 const TODAY = new Date().toISOString().slice(0, 10)
@@ -21,6 +24,7 @@ function matchesStage(client, filter) {
 }
 
 export default function App() {
+  const session = useSession()
   const { clients, addClient, updateClient, deleteClient, importClients } = useClients()
   const [modal, setModal]               = useState(null)
   const [search, setSearch]             = useState('')
@@ -125,6 +129,9 @@ export default function App() {
 
   const groupMode = !dueNowFilter && !paymentFilter && stageFilter === 'all'
 
+  if (session === undefined) return null   // resolves in one tick from localStorage
+  if (!session)             return <LoginPage />
+
   function handleSave(data) {
     if (modal.mode === 'add') addClient(data)
     else updateClient(modal.client.id, data)
@@ -183,6 +190,9 @@ export default function App() {
             </button>
             <button className="btn-primary" onClick={() => setModal({ mode: 'add' })}>
               + Add Client
+            </button>
+            <button className="btn-secondary" onClick={() => supabase.auth.signOut()}>
+              Sign out
             </button>
             <input
               ref={fileInputRef}
