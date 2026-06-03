@@ -131,6 +131,17 @@ export default function App() {
     setModal(null)
   }
 
+  function handleExport() {
+    const dateStr = new Date().toISOString().slice(0, 10)
+    const blob = new Blob([JSON.stringify(clients, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `force-systems-clients-${dateStr}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function handleImport(e) {
     const file = e.target.files[0]
     if (!file) return
@@ -164,6 +175,9 @@ export default function App() {
             <span className="brand-sub">Force Systems</span>
           </div>
           <div className="header-actions">
+            <button className="btn-secondary" onClick={handleExport}>
+              Export JSON
+            </button>
             <button className="btn-secondary" onClick={() => fileInputRef.current?.click()}>
               Import JSON
             </button>
