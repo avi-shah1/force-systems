@@ -1,7 +1,8 @@
 # Force Systems — CLAUDE.md
 
 Client follow-up dashboard for Avi Shah. It replaces the manual "Follow-up
-Required" spreadsheet. React + Vite, no backend, data persists in localStorage.
+Required" spreadsheet. React + Vite frontend; Supabase backend (in progress —
+localStorage is still the active persistence layer while migration is underway).
 
 ## Dev
 
@@ -18,11 +19,11 @@ not guess them.
 
 - Keep all client state in `useClients` (`src/hooks/useClients.js`). Pass data and
   callbacks down via props. Do not add React context or a state library.
-- Do not add a backend, API calls, or an external database. Persistence is
-  localStorage only.
 - Use plain CSS co-located with each component. Do not add Tailwind, MUI, or any
   other UI library.
 - Generate IDs with `crypto.randomUUID()`. Store all dates as ISO 8601 strings.
+- All Supabase access goes through `src/lib/supabase.js` — import `supabase` from
+  there; never instantiate a second client elsewhere.
 
 ## Data model — IMPORTANT
 
@@ -70,12 +71,32 @@ backup.
 ascending; a client whose date is today or earlier is "due". Treat this as the
 core feature of the tool.
 
+## Supabase — SECURITY RULES (read before touching anything auth/data related)
+
+- **Anon key is intentionally public** — it is safe to ship in browser code and
+  is already exposed via `VITE_SUPABASE_ANON_KEY`. It grants only what RLS allows.
+- **Never add the `service_role` key anywhere in this repo.** It bypasses RLS and
+  has full database access. It must never appear in client code, `.env`, or git history.
+- **Security comes from Row Level Security policies on the Supabase side**, not
+  from hiding the anon key. Before exposing any table, ensure RLS is enabled and
+  policies are in place.
+- **Never commit secrets.** `.env` is in `.gitignore`. If you need to document
+  which variables are required, use `.env.example` with empty values only.
+
+### Environment variables
+
+| Variable | Where | Notes |
+|---|---|---|
+| `VITE_SUPABASE_URL` | `.env` (local only) | Project URL from Supabase dashboard |
+| `VITE_SUPABASE_ANON_KEY` | `.env` (local only) | Public anon key — safe in browser |
+
 ## File structure
 
 ```
 src/
 ├── components/  ClientList, ClientModal, StatCard  (.jsx + co-located .css)
 ├── hooks/       useClients.js — all client CRUD + localStorage sync
+├── lib/         supabase.js — single Supabase client instance
 ├── utils/       format.js — formatDate helper
 ├── App.jsx / App.css        — root layout, header, search/filter, stats
 ├── index.css                — global reset + base styles + dark theme
