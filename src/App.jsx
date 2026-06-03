@@ -30,6 +30,7 @@ export default function App() {
   const [domainFilter, setDomainFilter] = useState(false)
   const [marketingFilter, setMarketingFilter] = useState(false)
   const [imagesFilter, setImagesFilter] = useState('all')
+  const [paymentFilter, setPaymentFilter]   = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [reviewAge] = useState(daysSinceReview)
   const fileInputRef = useRef(null)
@@ -40,21 +41,25 @@ export default function App() {
     if (card === 'total') {
       setStageFilter('all')
       setDueNowFilter(false)
+      setPaymentFilter(false)
     } else if (card === 'due') {
+      setPaymentFilter(false)
       setDueNowFilter((v) => !v)
+    } else if (card === 'payment') {
+      setDueNowFilter(false)
+      setPaymentFilter((v) => !v)
     } else {
-      if (!dueNowFilter && stageFilter === card) {
-        setStageFilter('all')
-      } else {
-        setStageFilter(card)
-        setDueNowFilter(false)
-      }
+      const alreadySelected = !dueNowFilter && !paymentFilter && stageFilter === card
+      setDueNowFilter(false)
+      setPaymentFilter(false)
+      setStageFilter(alreadySelected ? 'all' : card)
     }
   }
 
   function handleDropdownChange(val) {
     setStageFilter(val)
     setDueNowFilter(false)
+    setPaymentFilter(false)
   }
 
   function handleBannerFilter(type) {
@@ -80,6 +85,8 @@ export default function App() {
       }
       if (dueNowFilter) {
         if (!c.nextCheckIn || c.nextCheckIn > TODAY) return false
+      } else if (paymentFilter) {
+        if (!c.paymentDue) return false
       } else {
         if (!matchesStage(c, stageFilter)) return false
       }
@@ -101,7 +108,7 @@ export default function App() {
     active:     clients.filter((c) => c.stage === 'active').length,
     onboarding: clients.filter((c) => c.stage === 'onboarding' || c.stage === 'awaiting-form').length,
     warm:       clients.filter((c) => c.stage === 'warm').length,
-    paused:     clients.filter((c) => c.stage === 'paused').length,
+    payment:    clients.filter((c) => Boolean(c.paymentDue)).length,
     due:        clients.filter((c) => c.nextCheckIn && c.nextCheckIn <= TODAY).length,
   }
 
@@ -112,10 +119,11 @@ export default function App() {
   }
 
   const activeCard = dueNowFilter ? 'due'
+    : paymentFilter ? 'payment'
     : stageFilter === 'all' ? 'total'
     : stageFilter
 
-  const groupMode = !dueNowFilter && stageFilter === 'all'
+  const groupMode = !dueNowFilter && !paymentFilter && stageFilter === 'all'
 
   function handleSave(data) {
     if (modal.mode === 'add') addClient(data)
@@ -144,7 +152,7 @@ export default function App() {
     e.target.value = ''
   }
 
-  const dropdownValue = dueNowFilter ? 'all' : stageFilter
+  const dropdownValue = dueNowFilter || paymentFilter ? 'all' : stageFilter
 
   return (
     <div className="app">
@@ -218,9 +226,9 @@ export default function App() {
             onClick={() => handleStatCard('warm')}
           />
           <StatCard
-            label="Paused" value={stats.paused} accent="gray"
-            selected={activeCard === 'paused'}
-            onClick={() => handleStatCard('paused')}
+            label="Payment Owed" value={stats.payment} accent="yellow"
+            selected={activeCard === 'payment'}
+            onClick={() => handleStatCard('payment')}
           />
           <StatCard
             label="Due Now" value={stats.due} accent="red"

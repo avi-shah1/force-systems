@@ -90,6 +90,7 @@
 .stat-card--orange.stat-card--selected  { border-color: #fb923c; }
 .stat-card--gray.stat-card--selected    { border-color: #888; }
 .stat-card--red.stat-card--selected     { border-color: #f87171; }
+.stat-card--yellow.stat-card--selected  { border-color: #facc15; }
 
 .stat-value {
   font-size: 32px;
