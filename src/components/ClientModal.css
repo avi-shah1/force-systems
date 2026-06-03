@@ -136,6 +136,37 @@
   flex-shrink: 0;
 }
 
+.payment-input-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.currency-toggle {
+  background: #1a1a28;
+  border: 1px solid #2a2a38;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: #facc15;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 11px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.currency-toggle:hover {
+  background: #252535;
+  color: #fde68a;
+}
+
+.form-field .payment-input-row input:not([type="checkbox"]) {
+  border-radius: 0 8px 8px 0;
+  flex: 1;
+  min-width: 0;
+}
+
 .form-error {
   font-size: 13px;
   color: #f87171;

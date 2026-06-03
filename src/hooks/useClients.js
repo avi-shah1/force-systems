@@ -24,6 +24,7 @@ function migrate(c) {
   if (out.domainStatus === undefined) out.domainStatus = 'na'
   if (out.marketingFormSent === undefined) out.marketingFormSent = false
   if (out.paymentDue === undefined) out.paymentDue = ''
+  if (out.currency === undefined) out.currency = 'USD'
   if (out.nextCheckIn === undefined) out.nextCheckIn = null
   if (out.notes === undefined) out.notes = ''
   // Merge action into notes (one-time migration — action is cleared to '' afterwards)

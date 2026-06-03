@@ -34,6 +34,7 @@ const EMPTY = {
   domainStatus: 'na',
   marketingFormSent: false,
   paymentDue: '',
+  currency: 'USD',
   nextCheckIn: '',
   notes: '',
 }
@@ -109,12 +110,22 @@ export default function ClientModal({ mode, initial, onSave, onClose }) {
               />
             </Field>
             <Field label="Payment Due">
-              <input
-                type="text"
-                value={form.paymentDue}
-                onChange={(e) => set('paymentDue', e.target.value)}
-                placeholder="e.g. Owes $147"
-              />
+              <div className="payment-input-row">
+                <button
+                  type="button"
+                  className="currency-toggle"
+                  onClick={() => set('currency', form.currency === 'GBP' ? 'USD' : 'GBP')}
+                  title="Toggle currency (USD / GBP)"
+                >
+                  {form.currency === 'GBP' ? '£' : '$'}
+                </button>
+                <input
+                  type="text"
+                  value={form.paymentDue}
+                  onChange={(e) => set('paymentDue', e.target.value)}
+                  placeholder="e.g. 147 or Collect $200 from Guy"
+                />
+              </div>
             </Field>
           </div>
 

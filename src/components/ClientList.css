@@ -1,7 +1,7 @@
 .client-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 .client-card {
@@ -19,12 +19,20 @@
   border-color: #2e2e3a;
 }
 
-.client-card--due {
-  border-color: #3a1a1a;
+.client-card--overdue {
+  border-color: #f87171;
 }
 
-.client-card--due:hover {
-  border-color: #5a2a2a;
+.client-card--overdue:hover {
+  border-color: #ef4444;
+}
+
+.client-card--due-today {
+  border-color: #facc15;
+}
+
+.client-card--due-today:hover {
+  border-color: #fde047;
 }
 
 .client-avatar {
@@ -84,8 +92,13 @@
   margin-bottom: 4px;
 }
 
-.client-checkin--due {
+.client-checkin--overdue {
   color: #f87171;
+  font-weight: 600;
+}
+
+.client-checkin--today {
+  color: #facc15;
   font-weight: 600;
 }
 
@@ -137,6 +150,53 @@
   flex-direction: column;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.client-section {
+  margin-bottom: 4px;
+}
+
+.section-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #1e1e28;
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.section-count {
+  font-size: 12px;
+  color: #444;
+  background: #1e1e28;
+  padding: 1px 8px;
+  border-radius: 12px;
+}
+
+.section-chevron {
+  margin-left: auto;
+  color: #444;
+  font-size: 11px;
 }
 
 .empty-state {
