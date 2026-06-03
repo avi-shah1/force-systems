@@ -1,9 +1,87 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase.js'
 
-const STORAGE_KEY = 'force_systems_clients'
+// ── Field-name mapping ────────────────────────────────────────────────────────
+// Postgres columns are snake_case; the rest of the app uses camelCase.
+// toRow() and fromRow() are the only two places that know about this mapping.
 
-function migrate(c) {
+function fromRow(row) {
+  return {
+    id:                 row.id,
+    createdAt:          row.created_at,
+    updatedAt:          row.updated_at,
+    name:               row.name,
+    company:            row.company,
+    email:              row.email,
+    phone:              row.phone,
+    stage:              row.stage,
+    onboardingFormDone: row.onboarding_form_done,
+    imagesStatus:       row.images_status,
+    gmbStatus:          row.gmb_status,
+    domainStatus:       row.domain_status,
+    marketingFormSent:  row.marketing_form_sent,
+    paymentDue:         row.payment_due,
+    currency:           row.currency,
+    nextCheckIn:        row.next_check_in ?? null,
+    notes:              row.notes,
+  }
+}
+
+// Maps only the keys that are present in obj — safe for both full inserts
+// and partial updates (e.g. { nextCheckIn: date } from Quick Move).
+const JS_TO_PG = {
+  id:                 'id',
+  createdAt:          'created_at',
+  updatedAt:          'updated_at',
+  name:               'name',
+  company:            'company',
+  email:              'email',
+  phone:              'phone',
+  stage:              'stage',
+  onboardingFormDone: 'onboarding_form_done',
+  imagesStatus:       'images_status',
+  gmbStatus:          'gmb_status',
+  domainStatus:       'domain_status',
+  marketingFormSent:  'marketing_form_sent',
+  paymentDue:         'payment_due',
+  currency:           'currency',
+  nextCheckIn:        'next_check_in',
+  notes:              'notes',
+}
+
+function toRow(obj) {
+  const row = {}
+  for (const [jsKey, pgKey] of Object.entries(JS_TO_PG)) {
+    if (jsKey in obj) row[pgKey] = obj[jsKey] ?? null
+  }
+  return row
+}
+
+// ── Defaults ──────────────────────────────────────────────────────────────────
+
+const DEFAULTS = {
+  company:            '',
+  email:              '',
+  phone:              '',
+  stage:              'active',
+  onboardingFormDone: false,
+  imagesStatus:       'awaiting-client',
+  gmbStatus:          'na',
+  domainStatus:       'na',
+  marketingFormSent:  false,
+  paymentDue:         '',
+  currency:           'USD',
+  nextCheckIn:        null,
+  notes:              '',
+}
+
+// ── Normalise (used only by importClients) ────────────────────────────────────
+// Handles old localStorage exports that may carry renamed/removed fields.
+
+function normalise(c) {
   const out = { ...c }
+
+  // Old field-name migrations from the localStorage era
   if (out.status !== undefined && out.stage === undefined) {
     const map = { active: 'active', pending: 'onboarding', closed: 'paused' }
     out.stage = map[out.status] ?? 'active'
@@ -17,62 +95,125 @@ function migrate(c) {
     out.marketingFormSent = Boolean(out.qrMarketingGiven)
     delete out.qrMarketingGiven
   }
-  if (out.stage === undefined) out.stage = 'active'
-  if (out.onboardingFormDone === undefined) out.onboardingFormDone = false
-  if (out.imagesStatus === undefined) out.imagesStatus = 'awaiting-client'
-  if (out.gmbStatus === undefined) out.gmbStatus = 'na'
-  if (out.domainStatus === undefined) out.domainStatus = 'na'
-  if (out.marketingFormSent === undefined) out.marketingFormSent = false
-  if (out.paymentDue === undefined) out.paymentDue = ''
-  if (out.currency === undefined) out.currency = 'USD'
-  if (out.nextCheckIn === undefined) out.nextCheckIn = null
-  if (out.notes === undefined) out.notes = ''
-  // Merge action into notes (one-time migration — action is cleared to '' afterwards)
   if (out.action) {
-    out.notes = [out.action, out.notes].filter(Boolean).join('\n')
-    out.action = ''
+    out.notes = [out.action, out.notes ?? ''].filter(Boolean).join('\n')
+    delete out.action
   }
-  if (out.action === undefined) out.action = ''
+
+  // Fill missing fields with defaults
+  if (!out.id)                         out.id                 = crypto.randomUUID()
+  if (!out.createdAt)                  out.createdAt          = new Date().toISOString()
+  if (!out.updatedAt)                  out.updatedAt          = new Date().toISOString()
+  for (const [k, v] of Object.entries(DEFAULTS)) {
+    if (out[k] == null) out[k] = v
+  }
   return out
 }
 
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
 export function useClients() {
-  const [clients, setClients] = useState(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? []
-      return stored.map(migrate)
-    } catch {
-      return []
-    }
-  })
+  const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
 
+  // Initial load
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(clients))
-  }, [clients])
+    let cancelled = false
+    supabase
+      .from('clients')
+      .select('*')
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) {
+          console.error('useClients fetch:', error.message)
+          setError(error.message)
+        } else {
+          setClients((data ?? []).map(fromRow))
+        }
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
-  const addClient = (data) =>
-    setClients((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        ...data,
-      },
-    ])
+  const addClient = useCallback(async (data) => {
+    const now = new Date().toISOString()
+    const client = {
+      id:        crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+      ...DEFAULTS,
+      ...data,
+    }
+    const { data: row, error } = await supabase
+      .from('clients')
+      .insert(toRow(client))
+      .select()
+      .single()
+    if (error) {
+      console.error('useClients addClient:', error.message)
+      setError(error.message)
+      return
+    }
+    setClients((prev) => [...prev, fromRow(row)])
+  }, [])
 
-  const updateClient = (id, data) =>
-    setClients((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString() } : c
-      )
-    )
+  const updateClient = useCallback(async (id, data) => {
+    // toRow handles partial objects — only present keys are sent to Postgres
+    const updates = toRow({ ...data, updatedAt: new Date().toISOString() })
+    const { data: row, error } = await supabase
+      .from('clients')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) {
+      console.error('useClients updateClient:', error.message)
+      setError(error.message)
+      return
+    }
+    setClients((prev) => prev.map((c) => c.id === id ? fromRow(row) : c))
+  }, [])
 
-  const deleteClient = (id) =>
+  const deleteClient = useCallback(async (id) => {
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', id)
+    if (error) {
+      console.error('useClients deleteClient:', error.message)
+      setError(error.message)
+      return
+    }
     setClients((prev) => prev.filter((c) => c.id !== id))
+  }, [])
 
-  const importClients = (incoming) =>
-    setClients(incoming.map(migrate))
+  // Replaces all rows — used by the Import JSON button.
+  // Deletes everything first, then bulk-inserts the incoming array.
+  const importClients = useCallback(async (incoming) => {
+    const rows = incoming.map(normalise).map(toRow)
 
-  return { clients, addClient, updateClient, deleteClient, importClients }
+    const { error: delErr } = await supabase
+      .from('clients')
+      .delete()
+      .not('id', 'is', null)       // matches every row (id is never null)
+    if (delErr) {
+      console.error('useClients importClients (delete):', delErr.message)
+      setError(delErr.message)
+      return
+    }
+
+    const { data, error: insErr } = await supabase
+      .from('clients')
+      .insert(rows)
+      .select()
+    if (insErr) {
+      console.error('useClients importClients (insert):', insErr.message)
+      setError(insErr.message)
+      return
+    }
+    setClients((data ?? []).map(fromRow))
+  }, [])
+
+  return { clients, loading, error, addClient, updateClient, deleteClient, importClients }
 }
