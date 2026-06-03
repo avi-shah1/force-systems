@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase.js'
 
 // ── Field-name mapping ────────────────────────────────────────────────────────
@@ -117,9 +117,14 @@ export function useClients() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
-  // Initial load
+  // Suppresses realtime events during bulk import (delete-all + insert-all
+  // reuses the same UUIDs, so a late DELETE event would corrupt the new state).
+  const suppressRealtimeRef = useRef(false)
+
   useEffect(() => {
     let cancelled = false
+
+    // Initial fetch
     supabase
       .from('clients')
       .select('*')
@@ -133,7 +138,39 @@ export function useClients() {
         }
         setLoading(false)
       })
-    return () => { cancelled = true }
+
+    // Real-time subscription — picks up changes made by other sessions
+    const channel = supabase
+      .channel('clients-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'clients' },
+        (payload) => {
+          if (suppressRealtimeRef.current) return
+
+          if (payload.eventType === 'INSERT') {
+            // Guard against our own insert arriving here before addClient's
+            // setClients call, which would cause a duplicate entry.
+            setClients((prev) => {
+              if (prev.some((c) => c.id === payload.new.id)) return prev
+              return [...prev, fromRow(payload.new)]
+            })
+          } else if (payload.eventType === 'UPDATE') {
+            setClients((prev) =>
+              prev.map((c) => c.id === payload.new.id ? fromRow(payload.new) : c)
+            )
+          } else if (payload.eventType === 'DELETE') {
+            // payload.old only carries the primary key with default replica identity
+            setClients((prev) => prev.filter((c) => c.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const addClient = useCallback(async (data) => {
@@ -155,7 +192,11 @@ export function useClients() {
       setError(error.message)
       return
     }
-    setClients((prev) => [...prev, fromRow(row)])
+    // Guard against the realtime INSERT arriving before this call
+    setClients((prev) => {
+      if (prev.some((c) => c.id === row.id)) return prev
+      return [...prev, fromRow(row)]
+    })
   }, [])
 
   const updateClient = useCallback(async (id, data) => {
@@ -189,17 +230,21 @@ export function useClients() {
   }, [])
 
   // Replaces all rows — used by the Import JSON button.
-  // Deletes everything first, then bulk-inserts the incoming array.
+  // Suppresses realtime events for the duration: the bulk delete+insert reuses
+  // the same UUIDs, so a stale DELETE event arriving after the new rows are set
+  // would incorrectly remove a client from state.
   const importClients = useCallback(async (incoming) => {
+    suppressRealtimeRef.current = true
     const rows = incoming.map(normalise).map(toRow)
 
     const { error: delErr } = await supabase
       .from('clients')
       .delete()
-      .not('id', 'is', null)       // matches every row (id is never null)
+      .not('id', 'is', null)
     if (delErr) {
       console.error('useClients importClients (delete):', delErr.message)
       setError(delErr.message)
+      suppressRealtimeRef.current = false
       return
     }
 
@@ -210,9 +255,12 @@ export function useClients() {
     if (insErr) {
       console.error('useClients importClients (insert):', insErr.message)
       setError(insErr.message)
+      suppressRealtimeRef.current = false
       return
     }
+
     setClients((data ?? []).map(fromRow))
+    suppressRealtimeRef.current = false
   }, [])
 
   return { clients, loading, error, addClient, updateClient, deleteClient, importClients }
