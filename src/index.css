@@ -11,12 +11,19 @@ body {
   min-height: 100vh;
 }
 
+/* Prevent iOS landscape font inflation */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 input, textarea, select, button {
   font-family: inherit;
 }
 
 button {
   cursor: pointer;
+  /* Eliminate 300 ms tap delay on mobile without disabling pinch-zoom */
+  touch-action: manipulation;
 }
 
 ::-webkit-scrollbar {

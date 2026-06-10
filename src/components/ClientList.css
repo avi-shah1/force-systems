@@ -210,3 +210,28 @@
 .empty-state strong {
   color: #888;
 }
+
+/* ── Mobile (≤ 480 px) ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Card: allow actions to wrap onto a second row */
+  .client-card {
+    flex-wrap: wrap;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  /* Action buttons: row below the info area, 2-per-row */
+  .client-actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .client-actions button {
+    flex: 1 1 calc(50% - 4px);
+    min-height: 44px;
+    white-space: normal;
+    text-align: center;
+  }
+}

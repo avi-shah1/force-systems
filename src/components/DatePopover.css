@@ -140,3 +140,26 @@
   font-weight: 700;
 }
 .cal-day--today:hover { background: #252550; }
+
+/* ── Mobile (≤ 480 px) ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .popover-overlay {
+    padding: 16px;
+  }
+
+  /* Fill available width on small screens */
+  .popover {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* Larger tap targets for quick-date buttons */
+  .popover-quick button {
+    min-height: 44px;
+  }
+
+  /* Larger tap targets for calendar days */
+  .cal-day {
+    padding: 8px 2px;
+  }
+}

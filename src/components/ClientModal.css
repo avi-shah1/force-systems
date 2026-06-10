@@ -178,3 +178,41 @@
   gap: 10px;
   padding-top: 4px;
 }
+
+/* ── Mobile (≤ 480 px) ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-header {
+    padding: 20px 20px 0;
+  }
+
+  .modal-form {
+    padding: 20px;
+  }
+
+  /* Form rows: single column instead of two */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent iOS auto-zoom (requires ≥ 16px) */
+  .form-field input:not([type="checkbox"]),
+  .form-field textarea,
+  .form-field select {
+    font-size: 16px;
+  }
+
+  /* Footer buttons: stacked, full-width */
+  .modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+    min-height: 44px;
+  }
+}

@@ -299,3 +299,82 @@
 .review-count-btn:hover  { border-color: #4f46e5; color: #a5b4fc; }
 
 .review-done-btn { flex-shrink: 0; }
+
+/* ── Mobile (≤ 480 px) ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Header: stack brand above action buttons */
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Two buttons per row in the header */
+  .header-actions .btn-primary,
+  .header-actions .btn-secondary {
+    flex: 1 1 calc(50% - 3px);
+    min-height: 44px;
+    text-align: center;
+  }
+
+  /* More breathing room in the main area */
+  .main {
+    padding: 20px 16px;
+  }
+
+  /* Stats: 3-column grid (2 rows of 3) */
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 12px 8px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  /* Controls: stack vertically, each full-width */
+  .controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .controls > * {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Prevent iOS auto-zoom on focus (requires ≥ 16px) */
+  .search-input,
+  .filter-select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .filter-toggle {
+    min-height: 44px;
+    text-align: left;
+    white-space: normal;
+  }
+
+  /* Review banner: "Done reviewing" goes full-width on its own row */
+  .review-done-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
